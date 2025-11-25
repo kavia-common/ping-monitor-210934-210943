@@ -1,51 +1,51 @@
-function deriveWsBase() {
-  const explicit = process.env.REACT_APP_WS_URL;
-  if (explicit) return explicit;
-
-  const apiBase =
-    process.env.REACT_APP_API_BASE ||
-    process.env.REACT_APP_BACKEND_URL ||
-    'http://localhost:8000'; // fallback only used if no env is provided
-
-  try {
-    const u = new URL(apiBase);
-    const wsProtocol = u.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${wsProtocol}//${u.host}`;
-  } catch {
-    return 'ws://localhost:8000';
-  }
-}
-
 function buildWsUrl(sessionId) {
-  const base = deriveWsBase();
+  // Prefer relative same-origin WS URL
+  const wsProto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+  const explicit = process.env.REACT_APP_WS_URL;
+  let base;
+  if (explicit && /^wss?:\/\//i.test(explicit)) {
+    try {
+      const u = new URL(explicit);
+      base = `${u.protocol}//${u.host}`;
+    } catch {
+      base = `${wsProto}://${window.location.host}`;
+    }
+  } else {
+    base = `${wsProto}://${window.location.host}`;
+  }
   const path = '/ws/ping';
-  const hasQ = path.includes('?');
-  const query = `${hasQ ? '&' : '?'}sessionId=${encodeURIComponent(sessionId)}`;
-  const slash = base.endsWith('/') ? '' : '';
-  return `${base}${slash}${path}${query}`;
+  const query = `?sessionId=${encodeURIComponent(sessionId)}`;
+  return `${base}${path}${query}`;
 }
 
 // PUBLIC_INTERFACE
 export function connectPingStream({ sessionId, onMessage, onOpen, onClose, onError }) {
   /** Connect to the ping WebSocket stream and return { socket, disconnect } */
   const url = buildWsUrl(sessionId);
+  // eslint-disable-next-line no-console
+  console.log('[ws] connecting to', url);
   const socket = new WebSocket(url);
 
   if (onOpen) socket.addEventListener('open', onOpen);
   if (onClose) socket.addEventListener('close', onClose);
-  if (onError) socket.addEventListener('error', onError);
+  if (onError)
+    socket.addEventListener('error', (e) => {
+      // eslint-disable-next-line no-console
+      console.error('[ws] error', e);
+      if (onError) onError(e);
+    });
   if (onMessage) {
     socket.addEventListener('message', (ev) => {
       try {
-        // support plain text or JSON with { line }
         const data = ev.data;
         if (typeof data === 'string') {
           onMessage(data);
         } else {
           onMessage(String(data));
         }
-      } catch {
-        // fall back to raw
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('[ws] message parse error', err);
         onMessage(String(ev.data || ''));
       }
     });

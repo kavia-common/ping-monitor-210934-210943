@@ -66,22 +66,32 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Health route
+/**
+ * Health routes
+ * - Preferred: GET /api/health
+ * - Legacy:    GET ${HEALTHCHECK_PATH} (default /health)
+ */
 // PUBLIC_INTERFACE
-app.get(HEALTHCHECK_PATH, (req, res) => {
-  /** Health check endpoint
+app.get('/api/health', (req, res) => {
+  /** Health check endpoint (new path)
    * Returns 200 OK when service is up
    * Response: { status: 'ok' }
    */
+  res.status(200).json({ status: 'ok' });
+});
+app.get(HEALTHCHECK_PATH, (req, res) => {
+  /** Health check endpoint (legacy path for backward compatibility) */
   res.status(200).json({ status: 'ok' });
 });
 
 // Initialize ping service singletons
 initPingService();
 
-// REST: start ping
+/**
+ * REST routes (preferred under /api) with legacy fallbacks
+ */
 // PUBLIC_INTERFACE
-app.post('/ping/start', async (req, res) => {
+app.post(['/api/ping/start', '/ping/start'], async (req, res) => {
   /** Start a ping session
    * Request body: { host: string, count?: number }
    * Response: { sessionId: string }
@@ -96,9 +106,8 @@ app.post('/ping/start', async (req, res) => {
   }
 });
 
-// REST: stop ping
 // PUBLIC_INTERFACE
-app.post('/ping/stop', async (req, res) => {
+app.post(['/api/ping/stop', '/ping/stop'], async (req, res) => {
   /** Stop a ping session
    * Request body: { sessionId: string }
    * Response: { stopped: true }

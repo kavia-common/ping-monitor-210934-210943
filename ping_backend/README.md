@@ -3,11 +3,14 @@
 This service executes OS `ping` per session and streams output lines to clients via WebSocket.
 
 Features
-- REST: POST /ping/start -> { sessionId }, POST /ping/stop -> { stopped }
+- REST (preferred under /api):
+  - POST /api/ping/start -> { sessionId }
+  - POST /api/ping/stop -> { stopped }
+  - Legacy paths /ping/start and /ping/stop are still supported.
 - WS: /ws/ping?sessionId=... streams ping stdout lines to all connected clients
-- Health check: GET /health
+- Health check: GET /api/health (legacy /health also responds via HEALTHCHECK_PATH)
 - Basic input validation (host/IP), per-session limits (lines/duration), concurrent session cap
-- CORS configured for http://localhost:3000 by default (configurable)
+- CORS is permissive for preview by default (origin: true, credentials: false) and can be restricted via env
 
 ## Quick start
 
@@ -19,15 +22,16 @@ Features
    npm start              # node
 
 By default it listens on PORT=8080.
+Preferred REST prefix is /api (e.g., GET /api/health).
 
 ## Environment variables
 
 See .env.example for all options:
 - PORT: default 8080
-- TRUST_PROXY: true/false
+- TRUST_PROXY: true/false (true recommended when behind reverse proxy/HTTPS so wss works)
 - LOG_LEVEL: info|silent
-- HEALTHCHECK_PATH: default /health
-- CORS_ORIGINS: comma separated origins to allow (default allows http://localhost:3000)
+- HEALTHCHECK_PATH: default /health (legacy health path; new path is fixed at /api/health)
+- CORS_ORIGINS: comma separated origins to allow (if you restrict; default is permissive via origin: true)
 - RATE_LIMIT_WINDOW_MS, RATE_LIMIT_MAX: basic rate limiting
 - MAX_LINES_PER_SESSION: default 500
 - MAX_CONCURRENT_SESSIONS: default 5
@@ -36,16 +40,18 @@ See .env.example for all options:
 
 ## Endpoints
 
-- GET ${HEALTHCHECK_PATH} -> 200 OK `{ "status": "ok" }`
-- POST /ping/start
-  Request: `{ "host": "8.8.8.8", "count": 5 }` (count optional)
-  Response: `{ "sessionId": "<uuid>" }`
+- GET /api/health -> 200 OK `{ "status": "ok" }` (legacy also available at `${HEALTHCHECK_PATH}`, default /health)
+- POST /api/ping/start  
+  Request: `{ "host": "8.8.8.8", "count": 5 }` (count optional)  
+  Response: `{ "sessionId": "<uuid>" }`  
+  Legacy path /ping/start is also supported.
 
-- POST /ping/stop
-  Request: `{ "sessionId": "<uuid>" }`
-  Response: `{ "stopped": true }` with 200, or 404 if not found
+- POST /api/ping/stop  
+  Request: `{ "sessionId": "<uuid>" }`  
+  Response: `{ "stopped": true }` with 200, or 404 if not found  
+  Legacy path /ping/stop is also supported.
 
-- WebSocket: /ws/ping?sessionId=<uuid>
+- WebSocket: /ws/ping?sessionId=<uuid>  
   Messages: plain text lines of ping output. Server sends a greeting upon connection, then stdout lines, and a final `[process exited]` message when done. Server also sends periodic ping frames for keepalive.
 
 ## WebSocket usage example (browser)
@@ -57,15 +63,18 @@ ws.onopen = () => console.log('connected');
 ws.onclose = () => console.log('closed');
 ```
 
+In HTTPS environments, use wss://.
+
 ## Platform notes
 
 - On Windows, arguments use `-n` for count.
 - On Linux/macOS, arguments use `-c` for count.
 - Without a count, the ping runs continuously until stopped or limits trigger.
 
-## Security notes
+## Security and CORS notes
 
 - Input validation attempts to restrict the host to IPv4/IPv6/domain/localhost and an optional restriction on private IPv4 ranges via `DENY_PRIVATE_NETWORKS`.
-- CORS is restricted to development origins by default. Configure `CORS_ORIGINS` in production.
+- CORS is configured permissively for preview (`origin: true`, `credentials: false`). To restrict in production, set `CORS_ORIGINS` and/or `REACT_APP_FRONTEND_URL`.
 - Basic rate limiting is enabled.
+- Behind HTTPS reverse proxies, `TRUST_PROXY=true` is recommended so secure scheme/wss upgrade works properly.
 - Processes are auto-terminated when exceeding configured max duration or max line count; resources are cleaned up on exit and client disconnects.

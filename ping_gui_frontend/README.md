@@ -12,21 +12,25 @@ Getting Started
 Open http://localhost:3000
 
 Environment variables (create .env in ping_gui_frontend)
-- REACT_APP_API_BASE or REACT_APP_BACKEND_URL: e.g., http://localhost:8000
-- REACT_APP_WS_URL: e.g., ws://localhost:8000 (optional; derived from API base if omitted)
-- REACT_APP_HEALTHCHECK_PATH: default /health
+- By default, the app uses relative paths on the same origin:
+  - REST: /api (e.g., GET /api/health, POST /api/ping/start, POST /api/ping/stop)
+  - WebSocket: /ws/ping?sessionId=...
+- Optional overrides (generally not needed in preview):
+  - REACT_APP_API_BASE or REACT_APP_BACKEND_URL: absolute API base (e.g., https://your-host:8080)
+  - REACT_APP_WS_URL: absolute WS base (e.g., wss://your-host:8080)
+- REACT_APP_HEALTHCHECK_PATH is no longer required; health uses /api/health.
 
 Preview URLs
-- In the platform preview, use the provided preview host (not localhost).
-- If the frontend is served over HTTPS, the websocket must use wss://.
-- Example (assumed backend for this preview):
-  REACT_APP_API_BASE=https://vscode-internal-21289-beta.beta01.cloud.kavia.ai:8080
-  REACT_APP_WS_URL=wss://vscode-internal-21289-beta.beta01.cloud.kavia.ai:8080
-  REACT_APP_HEALTHCHECK_PATH=/health
+- In platform preview, no localhost needed. The frontend calls /api and /ws on the same origin.
+- If the frontend is served over HTTPS, WebSocket automatically uses wss.
+- Example calls:
+  - GET https://<preview-host>/api/health
+  - POST https://<preview-host>/api/ping/start
+  - WS  wss://<preview-host>/ws/ping?sessionId=...
 
 UI Behavior
 - Start disabled until host matches a basic IP/domain validator.
-- Health banner shows when GET /health fails.
+- Health banner shows when GET /api/health fails.
 - Auto-scrolls to latest log; common error lines highlighted.
 - Stop performs clean teardown and terminates the backend session.
 - Teardown also occurs on unmount.

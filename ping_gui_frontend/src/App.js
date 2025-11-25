@@ -60,10 +60,8 @@ function App() {
       {!healthOk && (
         <div className="health-banner" role="status" aria-live="polite">
           <div>
-            Backend health check failed. Please ensure the backend is running and env URLs are set.
-            <span className="mono">
-              REACT_APP_API_BASE / REACT_APP_BACKEND_URL, REACT_APP_WS_URL
-            </span>
+            Backend health check failed. Ensure the backend is running and serving /api/health on the same origin.
+            <span className="mono">Using relative paths: /api and /ws</span>
           </div>
           <button
             className="btn btn-ghost"
