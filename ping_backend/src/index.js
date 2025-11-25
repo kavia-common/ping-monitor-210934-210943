@@ -132,4 +132,24 @@ attachWsServer({ server, getSession });
 server.listen(PORT, () => {
   // eslint-disable-next-line no-console
   console.log(`[ping-backend] listening on port ${PORT}`);
+  // eslint-disable-next-line no-console
+  console.log(`[ping-backend] Health check available at:`);
+  // eslint-disable-next-line no-console
+  console.log(`  - GET /api/health (preferred)`);
+  // eslint-disable-next-line no-console
+  console.log(`  - GET ${HEALTHCHECK_PATH} (legacy)`);
+  // eslint-disable-next-line no-console
+  console.log(`[ping-backend] Ping API available at:`);
+  // eslint-disable-next-line no-console
+  console.log(`  - POST /api/ping/start`);
+  // eslint-disable-next-line no-console
+  console.log(`  - POST /api/ping/stop`);
+  // eslint-disable-next-line no-console
+  console.log(`[ping-backend] WebSocket available at:`);
+  // eslint-disable-next-line no-console
+  console.log(`  - /ws/ping?sessionId=<uuid>`);
+  // eslint-disable-next-line no-console
+  console.log(`[ping-backend] CORS origins:`, Array.from(allowedOrigins));
+  // eslint-disable-next-line no-console
+  console.log(`[ping-backend] Trust proxy:`, TRUST_PROXY);
 });
