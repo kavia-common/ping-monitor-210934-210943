@@ -1,0 +1,4 @@
+{
+    "command": "npm install",
+    "working_directory": "/home/kavia/workspace/code-generation/ping-monitor-210934-210943/ping_gui_frontend"
+}
