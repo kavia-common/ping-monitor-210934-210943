@@ -74,7 +74,7 @@ export function usePingSession({ maxLogLength = 5000, retry = { attempts: 3, bac
           onClose: () => {
             setConnectionStatus('disconnected');
             // If still running, consider as end-of-stream
-            if (!unmountedRef.current && status !== 'idle') {
+            if (!unmountedRef.current) {
               appendLog('[stream closed]');
               setStatus('idle');
             }

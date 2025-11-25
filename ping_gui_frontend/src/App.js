@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import './index.css';
 import './App.css';
 import './theme.css';
@@ -9,12 +9,15 @@ import { api } from './services/api';
 
 // PUBLIC_INTERFACE
 function App() {
-  /** App entrypoint that renders a 1024x768 canvas with left controls and right log area.
+  /** App entrypoint that renders a 1024x768 canvas with left IP input panel and right log area.
+   * Start/Stop buttons are fixed at the bottom spanning the full width.
    * It manages backend health banner, integrates the ping session hook, and provides
    * Start/Stop behaviors with clean teardown.
    */
   const [healthOk, setHealthOk] = useState(true);
   const [checkingHealth, setCheckingHealth] = useState(true);
+  const [host, setHost] = useState('');
+  const ipInputRef = useRef(null);
 
   const {
     status,
@@ -28,6 +31,13 @@ function App() {
     maxLogLength: 5000,
     retry: { attempts: 3, backoffMs: 1000 },
   });
+
+  // Set initial focus on IP input
+  useEffect(() => {
+    if (ipInputRef.current) {
+      ipInputRef.current.focus();
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -52,8 +62,31 @@ function App() {
     };
   }, []);
 
-  const canStart = useMemo(() => status !== 'running' && status !== 'starting', [status]);
+  const hostValid = useMemo(() => {
+    if (!host) return false;
+    const value = host.trim();
+    // IPv4
+    const ipv4 = /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d?\d)(?:\.|$)){4}$/.test(value);
+    // IPv6 (basic)
+    const ipv6 = /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|(::1)|(::))$/.test(value);
+    // domain (simple)
+    const domain = /^(?=.{1,253}$)(?!-)([a-zA-Z0-9-]{1,63}\.)+[a-zA-Z]{2,63}$/.test(value);
+    // single label like 'localhost'
+    const localhost = value === 'localhost';
+    return ipv4 || ipv6 || domain || localhost;
+  }, [host]);
+
+  const canStart = useMemo(() => hostValid && status !== 'running' && status !== 'starting', [hostValid, status]);
   const canStop = useMemo(() => status === 'running' || status === 'starting', [status]);
+
+  const handleStart = async () => {
+    if (!canStart) return;
+    await startSession({ host: host.trim() });
+  };
+
+  const handleStop = async () => {
+    await stopSession();
+  };
 
   return (
     <div className="app-root">
@@ -84,19 +117,14 @@ function App() {
       <div className="canvas">
         <div className="panel panel-left">
           <div className="panel-header">
-            <h1 className="title">Ping Monitor</h1>
-            <p className="subtitle">Ocean Professional</p>
+            <h1 className="title">IP Address</h1>
           </div>
 
           <PingControls
-            disabledStart={!canStart}
-            disabledStop={!canStop}
-            onStart={async ({ host, count }) => {
-              await startSession({ host, count });
-            }}
-            onStop={async () => {
-              await stopSession();
-            }}
+            host={host}
+            setHost={setHost}
+            hostValid={hostValid}
+            ipInputRef={ipInputRef}
           />
 
           <div className="grow" />
@@ -117,17 +145,6 @@ function App() {
               >
                 WS: {connectionStatus.toUpperCase()}
               </span>
-              {!healthOk && <span className="badge badge-error">Backend Unhealthy</span>}
-            </div>
-            <div className="footer-actions">
-              <button
-                className="btn btn-secondary"
-                onClick={clearLogs}
-                title="Clear logs"
-                aria-label="Clear logs"
-              >
-                Clear Logs
-              </button>
             </div>
           </div>
         </div>
@@ -139,6 +156,26 @@ function App() {
             connectionStatus={connectionStatus}
             onClear={clearLogs}
           />
+        </div>
+
+        {/* Bottom buttons spanning full width */}
+        <div className="bottom-controls">
+          <button
+            className="btn btn-primary btn-large"
+            disabled={!canStart}
+            onClick={handleStart}
+            aria-label="Start ping"
+          >
+            Start
+          </button>
+          <button
+            className="btn btn-danger btn-large"
+            disabled={!canStop}
+            onClick={handleStop}
+            aria-label="Stop ping"
+          >
+            Stop
+          </button>
         </div>
       </div>
     </div>
