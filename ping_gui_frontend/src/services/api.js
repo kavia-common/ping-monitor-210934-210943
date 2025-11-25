@@ -1,7 +1,7 @@
 const API_BASE =
   process.env.REACT_APP_API_BASE ||
   process.env.REACT_APP_BACKEND_URL ||
-  'http://localhost:8000';
+  'http://localhost:8000'; // fallback only used if no env is provided
 
 function urlJoin(base, path) {
   const b = base.endsWith('/') ? base.slice(0, -1) : base;

@@ -34,6 +34,16 @@ Run the frontend (connects to backend at :8080)
 4) npm start
 App will open at http://localhost:3000
 
+Preview URLs
+- When using the platform preview environment, do not use localhost. Set the frontend .env to the provided preview host:
+  REACT_APP_API_BASE=https://<your-preview-host>:8080
+  REACT_APP_WS_URL=wss://<your-preview-host>:8080
+  REACT_APP_HEALTHCHECK_PATH=/health
+- If the frontend is served over HTTPS, the WebSocket URL must use wss://.
+- For this deployment, the assumed backend is:
+  https://vscode-internal-21289-beta.beta01.cloud.kavia.ai:8080 (REST)
+  wss://vscode-internal-21289-beta.beta01.cloud.kavia.ai:8080 (WS)
+
 Environment configuration
 Frontend (.env at ping_gui_frontend/)
 - REACT_APP_API_BASE or REACT_APP_BACKEND_URL

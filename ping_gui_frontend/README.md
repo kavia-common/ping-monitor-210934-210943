@@ -16,6 +16,14 @@ Environment variables (create .env in ping_gui_frontend)
 - REACT_APP_WS_URL: e.g., ws://localhost:8000 (optional; derived from API base if omitted)
 - REACT_APP_HEALTHCHECK_PATH: default /health
 
+Preview URLs
+- In the platform preview, use the provided preview host (not localhost).
+- If the frontend is served over HTTPS, the websocket must use wss://.
+- Example (assumed backend for this preview):
+  REACT_APP_API_BASE=https://vscode-internal-21289-beta.beta01.cloud.kavia.ai:8080
+  REACT_APP_WS_URL=wss://vscode-internal-21289-beta.beta01.cloud.kavia.ai:8080
+  REACT_APP_HEALTHCHECK_PATH=/health
+
 UI Behavior
 - Start disabled until host matches a basic IP/domain validator.
 - Health banner shows when GET /health fails.

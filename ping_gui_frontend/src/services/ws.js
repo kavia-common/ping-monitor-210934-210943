@@ -5,7 +5,7 @@ function deriveWsBase() {
   const apiBase =
     process.env.REACT_APP_API_BASE ||
     process.env.REACT_APP_BACKEND_URL ||
-    'http://localhost:8000';
+    'http://localhost:8000'; // fallback only used if no env is provided
 
   try {
     const u = new URL(apiBase);
