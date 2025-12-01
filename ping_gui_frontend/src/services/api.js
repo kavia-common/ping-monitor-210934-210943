@@ -26,7 +26,7 @@ function urlJoin(base, path) {
 /**
  * Retry helper for fetch requests
  */
-async function fetchWithRetry(url, options = {}, retries = 3, backoff = 1000) {
+async function fetchWithRetry(url, options = {}, retries = 3, initialBackoff = 1000) {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       const res = await fetch(url, options);
@@ -35,9 +35,9 @@ async function fetchWithRetry(url, options = {}, retries = 3, backoff = 1000) {
       if (attempt === retries) {
         throw err;
       }
-      console.warn(`[api] Attempt ${attempt}/${retries} failed for ${url}, retrying in ${backoff}ms...`, err.message);
-      await new Promise((resolve) => setTimeout(resolve, backoff));
-      backoff *= 2; // Exponential backoff
+      const currentBackoff = initialBackoff * Math.pow(2, attempt - 1);
+      console.warn(`[api] Attempt ${attempt}/${retries} failed for ${url}, retrying in ${currentBackoff}ms...`, err.message);
+      await new Promise((resolve) => setTimeout(resolve, currentBackoff));
     }
   }
 }

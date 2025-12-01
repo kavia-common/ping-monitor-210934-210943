@@ -67,21 +67,48 @@ The frontend uses relative paths (`/api` and `/ws`) which work seamlessly with t
 
 ## Environment configuration
 
-### Frontend (.env at ping_gui_frontend/)
+### Frontend Environment Variables (.env at ping_gui_frontend/)
+
+**Core Connection Variables:**
+
+- **REACT_APP_API_BASE** (optional): REST API base URL for backend
+  - Default: Uses relative path `/api` (same-origin, recommended)
+  - Example: `https://your-backend-host:8080`
+  - Purpose: HTTP requests for start/stop ping and health checks
+
+- **REACT_APP_BACKEND_URL** (optional): Alternative to REACT_APP_API_BASE
+  - If both set, REACT_APP_API_BASE takes precedence
+
+- **REACT_APP_WS_URL** (optional): WebSocket base URL for live ping stream
+  - Default: Same-origin with `ws://` or `wss://` based on page protocol
+  - Example: `wss://your-backend-host:8080`
+  - Purpose: WebSocket connections for real-time ping output
+
+- **REACT_APP_FRONTEND_URL** (optional): Frontend URL for documentation/CORS
+  - Example: `https://vscode-internal-21289-beta.beta01.cloud.kavia.ai:3000`
+
+**Configuration Modes:**
 
 For same-origin access (default and recommended):
 - Leave `REACT_APP_API_BASE` and `REACT_APP_WS_URL` unset or empty
 - Frontend will use relative paths: `/api` for REST and `/ws` for WebSocket
+- Works with setupProxy.js in dev and reverse proxy in production
 
 For cross-origin access (advanced):
-- `REACT_APP_API_BASE` or `REACT_APP_BACKEND_URL`: Full backend URL (e.g., http://localhost:8080)
-- `REACT_APP_WS_URL`: WebSocket URL (e.g., ws://localhost:8080 or wss://host:8080)
+- Set `REACT_APP_API_BASE` or `REACT_APP_BACKEND_URL` to full backend URL
+- Set `REACT_APP_WS_URL` to full WebSocket URL
+- Backend must have CORS configured with frontend origin
 
-Other variables:
-- `REACT_APP_FRONTEND_URL`: Frontend URL for documentation
-- `REACT_APP_NODE_ENV`, `REACT_APP_NEXT_TELEMETRY_DISABLED`, `REACT_APP_ENABLE_SOURCE_MAPS`
-- `REACT_APP_PORT`, `REACT_APP_TRUST_PROXY`, `REACT_APP_LOG_LEVEL`
-- `REACT_APP_FEATURE_FLAGS`, `REACT_APP_EXPERIMENTS_ENABLED`
+**Other Configuration Variables:**
+- `REACT_APP_NODE_ENV`: Node environment (development/production/test)
+- `REACT_APP_NEXT_TELEMETRY_DISABLED`: Disable telemetry (true/false)
+- `REACT_APP_ENABLE_SOURCE_MAPS`: Enable source maps in production (true/false)
+- `REACT_APP_PORT`: Development server port (default: 3000)
+- `REACT_APP_TRUST_PROXY`: Trust proxy headers (true/false)
+- `REACT_APP_LOG_LEVEL`: Logging level (info/warn/error/silent)
+- `REACT_APP_HEALTHCHECK_PATH`: Custom health check path
+- `REACT_APP_FEATURE_FLAGS`: Comma-separated enabled feature flags
+- `REACT_APP_EXPERIMENTS_ENABLED`: Enable experiments (true/false)
 
 ### Backend (.env at ping_backend/)
 
